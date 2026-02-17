@@ -480,4 +480,4 @@ class ActiveElection {
     public Date getStartTime() {
         return startTime;
     }
-                }
+            }
