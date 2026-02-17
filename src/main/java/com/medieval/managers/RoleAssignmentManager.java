@@ -24,7 +24,6 @@ public class RoleAssignmentManager implements Listener {
     public RoleAssignmentManager(MedievalKingdoms plugin) {
         this.plugin = plugin;
         this.pendingAssignments = new HashMap<>();
-        plugin.getServer().getPluginManager().registerEvents(this, plugin);
     }
     
     @EventHandler
@@ -48,28 +47,23 @@ public class RoleAssignmentManager implements Listener {
         RoleAssignment assignment = new RoleAssignment(player);
         double roll = ThreadLocalRandom.current().nextDouble();
         
-        // Check for special birth (extremely rare)
         if (roll < SPECIAL_BIRTH_CHANCE) {
             assignment.setSpecialBirth(true);
             assignment.setSpecialType(getRandomSpecialBirth());
             assignment.setProposedRank(Rank.NOBLE);
         }
-        // Check for noble birth
         else if (roll < NOBLE_CHANCE + SPECIAL_BIRTH_CHANCE) {
             assignment.setNobleBirth(true);
             assignment.setProposedRank(generateNobleRank());
         }
-        // Check for knight family
         else if (roll < NOBLE_CHANCE + SPECIAL_BIRTH_CHANCE + KNIGHT_CHANCE) {
             assignment.setKnightFamily(true);
             assignment.setProposedRank(Rank.KNIGHT);
         }
-        // Check for bastard of noble
         else if (roll < NOBLE_CHANCE + SPECIAL_BIRTH_CHANCE + KNIGHT_CHANCE + BASTARD_CHANCE) {
             assignment.setBastard(true);
             assignment.setProposedRank(Rank.SQUIRE);
         }
-        // Default peasant
         else {
             assignment.setProposedRank(Rank.PEASANT);
         }
@@ -100,27 +94,27 @@ public class RoleAssignmentManager implements Listener {
     }
     
     private String generateBackstory(RoleAssignment assignment) {
-        List<String> backstories = new ArrayList<>();
+        StringBuilder backstory = new StringBuilder();
         
         if (assignment.isSpecialBirth()) {
-            backstories.add("§6You were born under a rare celestial alignment!");
-            backstories.add("§eLegends speak of your " + assignment.getSpecialType() + "§e.");
-            backstories.add("§6Great things are expected of you.");
+            backstory.append("§6You were born under a rare celestial alignment!\n");
+            backstory.append("§eLegends speak of your ").append(assignment.getSpecialType()).append("§e.\n");
+            backstory.append("§6Great things are expected of you.");
         } else if (assignment.isNobleBirth()) {
-            backstories.add("§6You were born into nobility! Your family has served the kingdom for generations.");
-            backstories.add("§eYou start with a small estate and some family gold.");
+            backstory.append("§6You were born into nobility! Your family has served the kingdom for generations.\n");
+            backstory.append("§eYou start with a small estate and some family gold.");
         } else if (assignment.isKnightFamily()) {
-            backstories.add("§7Your father was a brave knight who died in battle.");
-            backstories.add("§eYou begin your journey as a " + assignment.getProposedRank().getDisplayName());
+            backstory.append("§7Your father was a brave knight who died in battle.\n");
+            backstory.append("§eYou begin your journey as a ").append(assignment.getProposedRank().getDisplayName());
         } else if (assignment.isBastard()) {
-            backstories.add("§5You are the bastard child of a powerful noble.");
-            backstories.add("§dYou start as a " + assignment.getProposedRank().getDisplayName() + " with a chance to prove yourself.");
+            backstory.append("§5You are the bastard child of a powerful noble.\n");
+            backstory.append("§dYou start as a ").append(assignment.getProposedRank().getDisplayName()).append(" with a chance to prove yourself.");
         } else {
-            backstories.add("§7You were born to poor peasants in a small village.");
-            backstories.add("§7You start with nothing but your determination.");
+            backstory.append("§7You were born to poor peasants in a small village.\n");
+            backstory.append("§7You start with nothing but your determination.");
         }
         
-        return String.join("\n", backstories);
+        return backstory.toString();
     }
     
     private void startRoleCeremony(Player player, RoleAssignment assignment) {
@@ -147,14 +141,12 @@ public class RoleAssignmentManager implements Listener {
     private void presentRoleChoice(Player player, RoleAssignment assignment) {
         player.sendMessage("");
         player.sendMessage("§6§lYOUR BIRTHRIGHT:");
-        player.sendMessage("§f" + assignment.getBackstory());
+        player.sendMessage(assignment.getBackstory());
         player.sendMessage("");
         
-        // Store assignment and wait for choice via command
         player.sendMessage("§eType §6/role accept §eto accept your fate!");
         player.sendMessage("§eType §6/role reroll §eto try again (cost: 100 gold)");
         
-        // Play sound
         player.playSound(player.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 1.0f, 1.0f);
     }
     
@@ -193,7 +185,6 @@ public class RoleAssignmentManager implements Listener {
         player.sendMessage("§6§l║ §fReputation: §a" + data.getReputation() + "/100");
         player.sendMessage("§6§l╚══════════════════════════════╝");
         
-        // Play sound based on rank
         if (data.getRank().getPower() >= 8) {
             player.playSound(player.getLocation(), Sound.ENTITY_WITHER_SPAWN, 1.0f, 1.0f);
         } else if (data.getRank().getPower() >= 5) {
@@ -239,6 +230,7 @@ class RoleAssignment {
     }
     
     public Player getPlayer() { return player; }
+    
     public Rank getProposedRank() { return proposedRank; }
     public void setProposedRank(Rank rank) { this.proposedRank = rank; }
     
@@ -254,12 +246,6 @@ class RoleAssignment {
     public boolean isSpecialBirth() { return specialBirth; }
     public void setSpecialBirth(boolean specialBirth) { this.specialBirth = specialBirth; }
     
-    public String getSpecialType() { return specialType; }
-    public void setSpecialType(String specialType) { this.specialType = specialType; }
-    
-    public String getBackstory() { return backstory; }
-    public void setBackstory(String backstory) { this.backstory = backstory; }
-}    
     public String getSpecialType() { return specialType; }
     public void setSpecialType(String specialType) { this.specialType = specialType; }
     
