@@ -1,0 +1,64 @@
+# Plugin Messages
+
+prefix: "§8[§6Medieval§8] §r"
+
+commands:
+  no-permission: "§cYou don't have permission to use this command!"
+  player-only: "§cThis command can only be used by players!"
+  invalid-usage: "§cInvalid usage! Use: {usage}"
+
+kingdom:
+  created: "§a§lKingdom created successfully!"
+  joined: "§aYou joined §e{kingdom}"
+  left: "§aYou left the kingdom"
+  disbanded: "§c§l{kingdom} has been disbanded!"
+  not-found: "§cKingdom not found!"
+  already-in: "§cYou are already in a kingdom!"
+  not-in: "§cYou are not in a kingdom!"
+  name-exists: "§cA kingdom with that name already exists!"
+  name-too-long: "§cKingdom name too long! Max {max} characters"
+  name-too-short: "§cKingdom name too short! Min {min} characters"
+  promote-success: "§a{player} has been promoted to {rank}"
+  demote-success: "§c{player} has been demoted to {rank}"
+  king-only: "§cOnly the King can do that!"
+
+vote:
+  started: "§a§lElection started! Use §e/vote cast <player> §ato cast your vote!"
+  cast: "§aYou voted for §e{candidate}"
+  changed: "§aYour vote has been changed to §e{candidate}"
+  already-voted: "§cYou already voted for this player!"
+  no-election: "§cNo active election in your kingdom!"
+  election-ended: "§cThe election has ended!"
+  winner: "§6§l{player} has been elected as the new King!"
+
+election:
+  results:
+    title: "§6§lElection Results"
+    line: "§7{player}: §e{votes} votes §7({percentage}%)"
+    bar: "§8[§a{bar}§8]"
+  time-left: "§eTime left: §6{minutes}:{seconds}"
+  total-votes: "§7Total votes: §a{votes}"
+
+role:
+  title: "§6§lYOUR ROLE"
+  line: "§fName: §e{name}"
+  rank: "§fRank: {rank}"
+  wealth: "§fGold: §6{gold}"
+  reputation: "§fReputation: §a{reputation}/100"
+  kingdom: "§fKingdom: §e{kingdom}"
+
+territory:
+  claimed: "§aTerritory claimed! Cost: §6{cost} gold"
+  unclaimed: "§cTerritory unclaimed"
+  not-yours: "§cThis territory belongs to {kingdom}!"
+  cannot-claim: "§cYou cannot claim territory here!"
+  max-reached: "§cYour kingdom has reached the maximum territory limit!"
+  insufficient-funds: "§cInsufficient funds! Need §6{cost} gold"
+
+war:
+  declared: "§c§lWAR DECLARED! {attacker} vs {defender}"
+  ended: "§e§lThe war has ended! Winner: {winner}"
+  surrendered: "§c{kingdom} has surrendered!"
+  peace: "§aPeace has been made between {kingdom1} and {kingdom2}"
+  can-declare: "§aYou can declare war on {kingdom}"
+  cannot-declare: "§cYou cannot declare war right now!"
