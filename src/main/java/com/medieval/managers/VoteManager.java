@@ -263,3 +263,221 @@ public class VoteManager {
         BossBar bossBar = electionBossBars.get(kingdom.getId());
         if (bossBar != null) {
             bossBar.removeAll();
+        }
+        
+        if (winner == null || maxVotes == 0 || totalVotes == 0) {
+            // No votes
+            kingdom.broadcastToKingdom("§c§lElection ended with no votes! The current leader remains.");
+        } else {
+            // Declare winner
+            Player winnerPlayer = Bukkit.getPlayer(winner);
+            String winnerName = winnerPlayer != null ? winnerPlayer.getName() : Bukkit.getOfflinePlayer(winner).getName();
+            
+            // Update kingdom leader
+            UUID oldLeader = kingdom.getLeaderUuid();
+            kingdom.setLeaderUuid(winner);
+            
+            // Update ranks
+            if (oldLeader != null) {
+                kingdom.promoteMember(oldLeader, Rank.NOBLE);
+                plugin.getDatabaseManager().executeUpdate(
+                    "UPDATE players SET rank = 'NOBLE' WHERE uuid = ?",
+                    oldLeader.toString()
+                );
+            }
+            kingdom.promoteMember(winner, Rank.KING);
+            plugin.getDatabaseManager().executeUpdate(
+                "UPDATE players SET rank = 'KING' WHERE uuid = ?",
+                winner.toString()
+            );
+            
+            // Update kingdom in database
+            plugin.getDatabaseManager().executeUpdate(
+                "UPDATE kingdoms SET leader_uuid = ? WHERE id = ?",
+                winner.toString(),
+                kingdom.getId()
+            );
+            
+            // Announce winner
+            kingdom.broadcastToKingdom("§6§l=================================");
+            kingdom.broadcastToKingdom("§6§l      ELECTION RESULTS!");
+            kingdom.broadcastToKingdom("§6§l=================================");
+            kingdom.broadcastToKingdom("§e§l" + winnerName + " §6§lhas been elected as the new King!");
+            kingdom.broadcastToKingdom("");
+            
+            // Show all results
+            for (Map.Entry<UUID, Integer> entry : results.entrySet()) {
+                String playerName = Bukkit.getOfflinePlayer(entry.getKey()).getName();
+                int votes = entry.getValue();
+                double percentage = totalVotes > 0 ? (votes * 100.0 / totalVotes) : 0;
+                String bar = getVoteBar(votes, maxVotes);
+                kingdom.broadcastToKingdom(String.format(
+                    "§7%s: §f%s §e(%d votes, %.1f%%) %s",
+                    bar,
+                    playerName,
+                    votes,
+                    percentage,
+                    winner == entry.getKey() ? "§6§l👑" : ""
+                ));
+            }
+            
+            // Special effects for winner
+            if (winnerPlayer != null && winnerPlayer.isOnline()) {
+                // Play sound
+                if (plugin.getConfig().getBoolean("sounds.enabled", true)) {
+                    winnerPlayer.playSound(winnerPlayer.getLocation(), Sound.ENTITY_WITHER_SPAWN, 1.0f, 1.0f);
+                }
+                
+                // Show title
+                winnerPlayer.sendTitle(
+                    "§6§lYOU ARE NOW KING!",
+                    "§eRule wisely, " + winnerName,
+                    20,
+                    100,
+                    20
+                );
+                
+                // Give crown (optional)
+                // winnerPlayer.getInventory().addItem(createCrown());
+            }
+            
+            // Log to database
+            plugin.getDatabaseManager().executeUpdate(
+                "INSERT INTO election_history (kingdom_id, winner_uuid, votes, date) VALUES (?, ?, ?, NOW())",
+                kingdom.getId(),
+                winner.toString(),
+                maxVotes
+            );
+        }
+        
+        // Clean up
+        activeElections.remove(kingdom.getId());
+        electionBossBars.remove(kingdom.getId());
+        
+        // Clear votes for this kingdom
+        playerVotes.entrySet().removeIf(entry -> 
+            kingdom.getMembers().contains(entry.getKey())
+        );
+    }
+    
+    private String getVoteBar(int votes, int maxVotes) {
+        int barLength = 20;
+        int filled = maxVotes > 0 ? (int) ((double) votes / maxVotes * barLength) : 0;
+        
+        StringBuilder bar = new StringBuilder("§8[");
+        for (int i = 0; i < barLength; i++) {
+            if (i < filled) {
+                bar.append("§a■");
+            } else {
+                bar.append("§7■");
+            }
+        }
+        bar.append("§8]");
+        
+        return bar.toString();
+    }
+    
+    private void showCurrentStandings(Player player, Kingdom kingdom) {
+        if (!isElectionActive(kingdom.getId())) return;
+        
+        ActiveElection election = activeElections.get(kingdom.getId());
+        Map<UUID, Integer> results = election.getResults();
+        int maxVotes = results.values().stream().max(Integer::compareTo).orElse(1);
+        int totalVotes = results.values().stream().mapToInt(Integer::intValue).sum();
+        
+        player.sendMessage("§6§lCurrent Election Standings:");
+        for (Map.Entry<UUID, Integer> entry : results.entrySet()) {
+            if (entry.getValue() == 0) continue; // Skip zero votes
+            
+            String playerName = Bukkit.getOfflinePlayer(entry.getKey()).getName();
+            int votes = entry.getValue();
+            double percentage = totalVotes > 0 ? (votes * 100.0 / totalVotes) : 0;
+            String bar = getVoteBar(votes, maxVotes);
+            boolean hasVoted = playerVotes.containsKey(player.getUniqueId()) && 
+                              playerVotes.get(player.getUniqueId()).equals(entry.getKey());
+            
+            player.sendMessage(String.format(
+                "%s §f%s §7(%d votes, %.1f%%) %s",
+                bar,
+                playerName,
+                votes,
+                percentage,
+                hasVoted ? "§a✓" : ""
+            ));
+        }
+        player.sendMessage("§7Total Votes: §a" + totalVotes);
+    }
+    
+    public boolean isElectionActive(int kingdomId) {
+        return activeElections.containsKey(kingdomId);
+    }
+    
+    public ActiveElection getActiveElection(int kingdomId) {
+        return activeElections.get(kingdomId);
+    }
+    
+    public void cancelElection(int kingdomId, Player canceller) {
+        Kingdom kingdom = plugin.getKingdomManager().getKingdomById(kingdomId);
+        if (kingdom == null) return;
+        
+        if (!kingdom.isLeader(canceller.getUniqueId())) {
+            canceller.sendMessage("§cOnly the King can cancel elections!");
+            return;
+        }
+        
+        ActiveElection election = activeElections.remove(kingdomId);
+        if (election != null) {
+            BossBar bossBar = electionBossBars.remove(kingdomId);
+            if (bossBar != null) {
+                bossBar.removeAll();
+            }
+            
+            kingdom.broadcastToKingdom("§c§lElection cancelled by King " + canceller.getName());
+        }
+    }
+}
+
+class ActiveElection {
+    private final Kingdom kingdom;
+    private final Map<UUID, Integer> votes;
+    private final Map<UUID, UUID> voterMap;
+    private final Date startTime;
+    
+    public ActiveElection(Kingdom kingdom) {
+        this.kingdom = kingdom;
+        this.votes = new HashMap<>();
+        this.voterMap = new HashMap<>();
+        this.startTime = new Date();
+        
+        // Initialize vote counts for all members
+        for (UUID uuid : kingdom.getMembers()) {
+            votes.put(uuid, 0);
+        }
+    }
+    
+    public void addVote(UUID voter, UUID candidate) {
+        voterMap.put(voter, candidate);
+        votes.put(candidate, votes.getOrDefault(candidate, 0) + 1);
+    }
+    
+    public void changeVote(UUID voter, UUID newCandidate) {
+        UUID oldCandidate = voterMap.get(voter);
+        if (oldCandidate != null) {
+            votes.put(oldCandidate, votes.get(oldCandidate) - 1);
+        }
+        voterMap.put(voter, newCandidate);
+        votes.put(newCandidate, votes.getOrDefault(newCandidate, 0) + 1);
+    }
+    
+    public Map<UUID, Integer> getResults() {
+        return new HashMap<>(votes);
+    }
+    
+    public int getTotalVotes() {
+        return voterMap.size();
+    }
+    
+    public Date getStartTime() {
+        return startTime;
+    }
+                }
