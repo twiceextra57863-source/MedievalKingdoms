@@ -5,7 +5,7 @@ database:
   host: localhost
   port: 3306
   name: medieval
-  username: root
+  username: Twicefear
   password: ""
 
 kingdom:
