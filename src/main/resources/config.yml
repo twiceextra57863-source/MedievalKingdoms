@@ -1,0 +1,51 @@
+# Medieval Kingdoms Configuration
+
+database:
+  type: mysql
+  host: localhost
+  port: 3306
+  name: medieval
+  username: root
+  password: ""
+
+kingdom:
+  max-name-length: 16
+  min-name-length: 3
+  create-cost: 1000
+  max-members: 100
+  tax-rate: 0.1
+  tax-interval: 86400
+
+election:
+  duration: 600
+  min-voters: 5
+  vote-cooldown: 86400
+
+territory:
+  claim-cost: 100
+  max-territories: 50
+  auto-unclaim-days: 30
+
+war:
+  declare-cost: 5000
+  min-players: 5
+  max-duration: 604800
+
+economy:
+  start-balance: 100
+  max-balance: 1000000
+  interest-rate: 0.01
+  interest-interval: 86400
+
+sounds:
+  enabled: true
+  vote-cast: "BLOCK_NOTE_BLOCK_PLING"
+  election-start: "ENTITY_FIREWORK_ROCKET_LAUNCH"
+  election-end: "ENTITY_WITHER_SPAWN"
+  promotion: "ENTITY_PLAYER_LEVELUP"
+
+particles:
+  enabled: true
+  vote: "PORTAL"
+  election: "FIREWORK"
+  promotion: "VILLAGER_HAPPY"
