@@ -1,0 +1,69 @@
+name: MedievalKingdoms
+version: 2.0.0
+main: com.medieval.MedievalKingdoms
+api-version: 1.21
+author: YourName
+description: Complete Medieval Kingdom Management Plugin with Advanced Voting System
+website: https://github.com/yourname/MedievalKingdoms
+
+commands:
+  kingdom:
+    description: Main kingdom command
+    usage: /kingdom <subcommand>
+    aliases: [k]
+  vote:
+    description: Voting commands
+    usage: /vote <subcommand>
+    aliases: [v]
+  election:
+    description: Election management
+    usage: /election <subcommand>
+    aliases: [elec]
+  role:
+    description: View your role and rank
+    usage: /role [accept|reroll|info]
+  kadmin:
+    description: Admin commands for kingdoms
+    usage: /kadmin <subcommand>
+    permission: medieval.admin
+  territory:
+    description: Territory management
+    usage: /territory <claim|unclaim|info>
+    aliases: [t]
+  war:
+    description: War management
+    usage: /war <declare|surrender|info>
+  alliance:
+    description: Alliance management
+    usage: /alliance <create|break|info>
+
+permissions:
+  medieval.*:
+    description: All medieval permissions
+    default: op
+    children:
+      medieval.admin: true
+      medieval.king: true
+      medieval.noble: true
+      medieval.knight: true
+      medieval.peasant: true
+      
+  medieval.admin:
+    description: Admin commands
+    default: op
+    
+  medieval.king:
+    description: King permissions
+    default: false
+    
+  medieval.noble:
+    description: Noble permissions
+    default: false
+    
+  medieval.knight:
+    description: Knight permissions
+    default: false
+    
+  medieval.peasant:
+    description: Peasant permissions
+    default: true
