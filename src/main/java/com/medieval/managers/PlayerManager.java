@@ -1,10 +1,8 @@
 package com.medieval.managers;
 
 import com.medieval.MedievalKingdoms;
-import com.medieval.models.PlayerData;
-import com.medieval.models.Rank;
+import com.medieval.models.*;
 import org.bukkit.entity.Player;
-import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -24,17 +22,6 @@ public class PlayerManager {
             PlayerData data = loadPlayerFromDatabase(uuid);
             if (data == null) {
                 data = new PlayerData(uuid);
-                // Save new player to database
-                plugin.getDatabaseManager().executeUpdate(
-                    "INSERT INTO players (uuid, name, kingdom_id, rank, gold, reputation, votecount) VALUES (?, ?, ?, ?, ?, ?, ?)",
-                    uuid.toString(),
-                    Bukkit.getOfflinePlayer(uuid).getName(),
-                    -1,
-                    Rank.PEASANT.name(),
-                    100.0,
-                    50,
-                    0
-                );
             }
             return data;
         });
@@ -46,14 +33,14 @@ public class PlayerManager {
     
     private PlayerData loadPlayerFromDatabase(UUID uuid) {
         try {
-            ResultSet resultSet = plugin.getDatabaseManager().executeQuery(
+            var future = plugin.getDatabaseManager().executeQuery(
                 "SELECT * FROM players WHERE uuid = ?",
                 uuid.toString()
-            ).get();
+            );
             
+            var resultSet = future.get();
             if (resultSet != null && resultSet.next()) {
                 PlayerData data = new PlayerData(uuid);
-                data.setName(resultSet.getString("name"));
                 data.setKingdomId(resultSet.getInt("kingdom_id"));
                 data.setRank(Rank.valueOf(resultSet.getString("rank")));
                 data.setGold(resultSet.getDouble("gold"));
@@ -62,8 +49,7 @@ public class PlayerManager {
                 return data;
             }
         } catch (Exception e) {
-            plugin.getLogger().severe("Error loading player data for " + uuid + ": " + e.getMessage());
-            e.printStackTrace();
+            plugin.getLogger().severe("Error loading player data: " + e.getMessage());
         }
         return null;
     }
@@ -73,14 +59,18 @@ public class PlayerManager {
         if (data == null) return;
         
         plugin.getDatabaseManager().executeUpdate(
-            "UPDATE players SET name = ?, kingdom_id = ?, rank = ?, gold = ?, reputation = ?, votecount = ? WHERE uuid = ?",
+            "INSERT INTO players (uuid, name, kingdom_id, rank, gold, reputation, votecount) " +
+            "VALUES (?, ?, ?, ?, ?, ?, ?) " +
+            "ON DUPLICATE KEY UPDATE " +
+            "name = VALUES(name), kingdom_id = VALUES(kingdom_id), rank = VALUES(rank), " +
+            "gold = VALUES(gold), reputation = VALUES(reputation), votecount = VALUES(votecount)",
+            uuid.toString(),
             data.getName(),
             data.getKingdomId(),
             data.getRank().name(),
             data.getGold(),
             data.getReputation(),
-            data.getVoteCount(),
-            uuid.toString()
+            data.getVoteCount()
         );
     }
     
@@ -88,25 +78,17 @@ public class PlayerManager {
         for (UUID uuid : playerDataMap.keySet()) {
             savePlayerData(uuid);
         }
-        plugin.getLogger().info("§aSaved " + playerDataMap.size() + " players to database!");
     }
     
     private void loadAllPlayers() {
         plugin.getDatabaseManager().executeQuery("SELECT uuid FROM players").thenAccept(resultSet -> {
             try {
-                int count = 0;
                 while (resultSet != null && resultSet.next()) {
                     UUID uuid = UUID.fromString(resultSet.getString("uuid"));
-                    PlayerData data = loadPlayerFromDatabase(uuid);
-                    if (data != null) {
-                        playerDataMap.put(uuid, data);
-                        count++;
-                    }
+                    loadPlayerFromDatabase(uuid);
                 }
-                plugin.getLogger().info("§aLoaded " + count + " players from database!");
             } catch (SQLException e) {
                 plugin.getLogger().severe("Error loading players: " + e.getMessage());
-                e.printStackTrace();
             }
         });
     }
@@ -130,15 +112,6 @@ public class PlayerManager {
         PlayerData data = getPlayerData(uuid);
         if (data != null) {
             data.setGold(data.getGold() + amount);
-            savePlayerData(uuid);
-        }
-    }
-    
-    public void addReputation(UUID uuid, int amount) {
-        PlayerData data = getPlayerData(uuid);
-        if (data != null) {
-            int newRep = Math.min(100, Math.max(0, data.getReputation() + amount));
-            data.setReputation(newRep);
             savePlayerData(uuid);
         }
     }
