@@ -259,4 +259,10 @@ class RoleAssignment {
     
     public String getBackstory() { return backstory; }
     public void setBackstory(String backstory) { this.backstory = backstory; }
+}    
+    public String getSpecialType() { return specialType; }
+    public void setSpecialType(String specialType) { this.specialType = specialType; }
+    
+    public String getBackstory() { return backstory; }
+    public void setBackstory(String backstory) { this.backstory = backstory; }
 }
