@@ -2,6 +2,7 @@ package com.medieval.managers;
 
 import com.medieval.MedievalKingdoms;
 import java.sql.*;
+import java.util.concurrent.CompletableFuture;
 
 public class DatabaseManager {
     private final MedievalKingdoms plugin;
@@ -33,7 +34,6 @@ public class DatabaseManager {
     
     private void createTables() throws SQLException {
         try (Statement stmt = connection.createStatement()) {
-            // Players table
             stmt.execute("CREATE TABLE IF NOT EXISTS players (" +
                 "uuid VARCHAR(36) PRIMARY KEY, " +
                 "name VARCHAR(16), " +
@@ -43,24 +43,45 @@ public class DatabaseManager {
                 "reputation INT DEFAULT 50, " +
                 "votecount INT DEFAULT 0)");
             
-            // Kingdoms table
             stmt.execute("CREATE TABLE IF NOT EXISTS kingdoms (" +
                 "id INT AUTO_INCREMENT PRIMARY KEY, " +
                 "name VARCHAR(32) UNIQUE, " +
                 "leader_uuid VARCHAR(36), " +
                 "color VARCHAR(7) DEFAULT '§6', " +
-                "treasury DOUBLE DEFAULT 0)");
+                "treasury DOUBLE DEFAULT 0, " +
+                "capital_world VARCHAR(32), " +
+                "capital_x INT, " +
+                "capital_y INT, " +
+                "capital_z INT)");
             
-            // Votes table
             stmt.execute("CREATE TABLE IF NOT EXISTS votes (" +
                 "id INT AUTO_INCREMENT PRIMARY KEY, " +
                 "kingdom_id INT, " +
                 "voter_uuid VARCHAR(36), " +
                 "candidate_uuid VARCHAR(36), " +
                 "UNIQUE KEY unique_vote (kingdom_id, voter_uuid))");
-            
-            plugin.getLogger().info("§aDatabase tables created/verified!");
         }
+    }
+    
+    // Simple executeUpdate method with variable arguments
+    public void executeUpdate(String query, Object... params) {
+        try (PreparedStatement stmt = connection.prepareStatement(query)) {
+            for (int i = 0; i < params.length; i++) {
+                stmt.setObject(i + 1, params[i]);
+            }
+            stmt.executeUpdate();
+        } catch (SQLException e) {
+            plugin.getLogger().severe("Database error: " + e.getMessage());
+        }
+    }
+    
+    // Simple executeQuery method
+    public ResultSet executeQuery(String query, Object... params) throws SQLException {
+        PreparedStatement stmt = connection.prepareStatement(query);
+        for (int i = 0; i < params.length; i++) {
+            stmt.setObject(i + 1, params[i]);
+        }
+        return stmt.executeQuery();
     }
     
     public Connection getConnection() { return connection; }
@@ -69,7 +90,6 @@ public class DatabaseManager {
         try {
             if (connection != null && !connection.isClosed()) {
                 connection.close();
-                plugin.getLogger().info("§cDatabase connection closed.");
             }
         } catch (SQLException e) {
             e.printStackTrace();
