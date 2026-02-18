@@ -3,11 +3,10 @@ package com.medieval.listeners;
 import com.medieval.MedievalKingdoms;
 import com.medieval.models.Kingdom;
 import com.medieval.models.PlayerData;
-import io.papermc.paper.event.player.AsyncChatEvent;
-import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
+import org.bukkit.event.player.AsyncPlayerChatEvent;
 
 public class ChatListener implements Listener {
     private final MedievalKingdoms plugin;
@@ -17,11 +16,11 @@ public class ChatListener implements Listener {
     }
     
     @EventHandler
-    public void onPlayerChat(AsyncChatEvent event) {
+    public void onPlayerChat(AsyncPlayerChatEvent event) {
         Player player = event.getPlayer();
-        String message = PlainTextComponentSerializer.plainText().serialize(event.message());
+        String message = event.getMessage();
         
-        // Check for kingdom chat prefix
+        // Check for kingdom chat prefix "!"
         if (message.startsWith("!")) {
             event.setCancelled(true);
             handleKingdomChat(player, message.substring(1));
@@ -32,7 +31,7 @@ public class ChatListener implements Listener {
         PlayerData data = plugin.getPlayerManager().getPlayerData(player);
         String rankPrefix = data.getRank().getPrefix();
         
-        event.message(Component.text(rankPrefix + player.getName() + "§f: " + message));
+        event.setFormat(rankPrefix + "%s: §f%s");
     }
     
     private void handleKingdomChat(Player player, String message) {
