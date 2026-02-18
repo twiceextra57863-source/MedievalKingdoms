@@ -1,20 +1,24 @@
 name: MedievalKingdoms
 version: 2.0.0
 main: com.medieval.MedievalKingdoms
-api-version: 1.21
+api-version: '1.21'  # यह 1.21 से 1.21.11 तक काम करेगा
 author: YourName
 description: Medieval Kingdom Management Plugin
 
 commands:
   kingdom:
     description: Main kingdom command
+    usage: /kingdom <subcommand>
     aliases: [k]
   vote:
     description: Voting commands
+    usage: /vote <subcommand>
     aliases: [v]
   role:
     description: Role management
+    usage: /role
 
 permissions:
   medieval.*:
+    description: All medieval permissions
     default: op
