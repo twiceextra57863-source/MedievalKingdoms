@@ -41,7 +41,6 @@ public class VoteManager {
         ActiveElection election = new ActiveElection(kingdom);
         activeElections.put(kingdom.getId(), election);
         
-        // Fixed: BarColor.YELLOW instead of GOLD
         BossBar bossBar = Bukkit.createBossBar(
             "§6§lElection in " + kingdom.getColoredName(),
             BarColor.YELLOW,
@@ -120,8 +119,10 @@ public class VoteManager {
         Map<UUID, Integer> results = election.getResults();
         UUID winner = null;
         int maxVotes = -1;
+        int totalVotes = 0;
         
         for (Map.Entry<UUID, Integer> entry : results.entrySet()) {
+            totalVotes += entry.getValue();
             if (entry.getValue() > maxVotes) {
                 maxVotes = entry.getValue();
                 winner = entry.getKey();
@@ -140,6 +141,22 @@ public class VoteManager {
         activeElections.remove(kingdom.getId());
         electionBossBars.remove(kingdom.getId());
         playerVotes.entrySet().removeIf(e -> kingdom.getMembers().contains(e.getKey()));
+    }
+    
+    // ✅ FIXED: Added this method
+    public void cancelElection(int kingdomId, Player canceller) {
+        Kingdom kingdom = plugin.getKingdomManager().getKingdomById(kingdomId);
+        if (kingdom == null) return;
+        
+        ActiveElection election = activeElections.remove(kingdomId);
+        if (election != null) {
+            BossBar bossBar = electionBossBars.remove(kingdomId);
+            if (bossBar != null) {
+                bossBar.removeAll();
+            }
+            
+            kingdom.broadcastToKingdom("§c§lElection cancelled by King " + canceller.getName());
+        }
     }
     
     public boolean isElectionActive(int kingdomId) {
