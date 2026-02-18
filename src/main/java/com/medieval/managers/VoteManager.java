@@ -41,9 +41,10 @@ public class VoteManager {
         ActiveElection election = new ActiveElection(kingdom);
         activeElections.put(kingdom.getId(), election);
         
+        // 🔴 FIXED: GOLD को YELLOW में बदला (Paper API में GOLD नहीं चलता)
         BossBar bossBar = Bukkit.createBossBar(
             "§6§lElection in " + kingdom.getColoredName(),
-            BarColor.YELLOW,
+            BarColor.YELLOW,  // यहाँ GOLD की जगह YELLOW use kiya
             BarStyle.SEGMENTED_10
         );
         electionBossBars.put(kingdom.getId(), bossBar);
@@ -143,7 +144,6 @@ public class VoteManager {
         playerVotes.entrySet().removeIf(e -> kingdom.getMembers().contains(e.getKey()));
     }
     
-    // ✅ FIXED: Added this method
     public void cancelElection(int kingdomId, Player canceller) {
         Kingdom kingdom = plugin.getKingdomManager().getKingdomById(kingdomId);
         if (kingdom == null) return;
@@ -154,7 +154,6 @@ public class VoteManager {
             if (bossBar != null) {
                 bossBar.removeAll();
             }
-            
             kingdom.broadcastToKingdom("§c§lElection cancelled by King " + canceller.getName());
         }
     }
